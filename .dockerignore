@@ -1,0 +1,25 @@
+# Contexto de build (nunca envie segredos nem dados para a imagem)
+.git
+.gitignore
+.github
+data/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+.scannerwork/
+tests/
+docs/
+*.md
+!README.md

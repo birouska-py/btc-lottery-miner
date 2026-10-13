@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Dados persistentes / segredos (NUNCA versionar)
+data/
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*
+!.env.example
+
+# Front / tooling
+.DS_Store
+.scannerwork/
