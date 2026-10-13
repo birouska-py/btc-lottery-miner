@@ -1,19 +1,24 @@
 # syntax=docker/dockerfile:1
 
 # ---------------------------------------------------------------------------
-# Stage 1 — compila o cpuminer-multi (solo) a partir do repositório oficial.
+# Stage 1 — compila o cpuminer-multi (branch "linux") a partir do repositório
+# oficial, com o commit FIXO para um build reproduzível.
 # ---------------------------------------------------------------------------
 FROM debian:bookworm-slim AS miner-builder
 
-ARG CPUMINER_REF=master
+# Commit fixo do tpruvot/cpuminer-multi (branch "master") para build reproduzível.
+ARG CPUMINER_REF=4b5c6dafb677191e968cfd12068923068a7bdf51
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git ca-certificates build-essential automake autoconf libtool pkg-config \
         libcurl4-openssl-dev libssl-dev zlib1g-dev libjansson-dev libgmp-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN git clone --depth 1 --branch "${CPUMINER_REF}" \
-        https://github.com/tpruvot/cpuminer-multi.git /src
+RUN git init /src \
+    && cd /src \
+    && git remote add origin https://github.com/tpruvot/cpuminer-multi.git \
+    && git fetch --depth 1 origin "${CPUMINER_REF}" \
+    && git checkout FETCH_HEAD
 
 WORKDIR /src
 
