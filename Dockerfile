@@ -5,7 +5,9 @@
 # ---------------------------------------------------------------------------
 FROM debian:bookworm-slim AS miner-builder
 
-ARG CPUMINER_REF=master
+ARG CPUMINER_REF=linux
+# Preenchido automaticamente pelo BuildKit (amd64, arm64, ...).
+ARG TARGETARCH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git ca-certificates build-essential automake autoconf libtool pkg-config \
@@ -17,11 +19,18 @@ RUN git clone --depth 1 --branch "${CPUMINER_REF}" \
 
 WORKDIR /src
 
+# x86/x86_64 aproveitam as rotinas de assembly (SHA-NI/AVX); no ARM o assembly
+# do projeto usa instruções de 32 bits, então compilamos em C puro.
 RUN ./autogen.sh \
-    && ./configure CFLAGS="-O3" \
+    && if [ "${TARGETARCH}" = "arm64" ] || [ "${TARGETARCH}" = "arm" ]; then \
+         CONFIGURE_FLAGS="--disable-assembly"; \
+       else \
+         CONFIGURE_FLAGS=""; \
+       fi \
+    && ./configure CFLAGS="-O3" ${CONFIGURE_FLAGS} \
     && make -j"$(nproc)" \
-    && strip minerd \
-    && install -m 0755 minerd /usr/local/bin/cpuminer
+    && strip minerd \&& strip minerd \ strip cpuminer \
+    && install -m 0755 cpuminer /usr/local/bin/cpuminer
 
 # ---------------------------------------------------------------------------
 # Stage 2 — runtime enxuto: Python + FastAPI + binário do cpuminer.
