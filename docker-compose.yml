@@ -1,0 +1,21 @@
+services:
+  miner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: btc-lottery-miner:latest
+    container_name: btc-lottery-miner
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      LOTTERY_DATA_DIR: /app/data
+      LOTTERY_DEFAULT_POOL_URL: "stratum+tcp://solo.ckpool.org:3333"
+      LOTTERY_DEFAULT_THREADS: "1"
+    # Persistência local: o volume guarda o banco SQLite criptografado e a
+    # configuração. Pare/recrie/atualize o container sem perder estado.
+    volumes:
+      - ./data:/app/data
+    # Para subir várias instâncias (ex.: vários workers), use projetos/volumes
+    # separados, pois o SQLite não aceita escrita concorrente bem-sucedida:
+    #   docker compose -p miner-01 up -d   (com ./data-01:/app/data)
