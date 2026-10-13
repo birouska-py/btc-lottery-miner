@@ -31,7 +31,7 @@ def make_service() -> WalletService:
 
 async def test_generate_does_not_persist() -> None:
     service = make_service()
-    generated = await service.generate(12)
+    generated = service.generate(12)
     assert generated.mnemonic.word_count == 12
     assert str(generated.address).startswith("bc1q")
     assert generated.path == "m/84'/0'/0'/0/0"

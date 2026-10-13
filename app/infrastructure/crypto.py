@@ -106,7 +106,7 @@ class PassphraseCipher:
             raise DecryptionError("segredo de cifragem vazio")
         try:
             raw = base64.urlsafe_b64decode(token.encode("ascii"))
-        except (ValueError, UnicodeEncodeError) as exc:
+        except ValueError as exc:
             raise DecryptionError("token de cifragem inválido") from exc
 
         minimum = 1 + SALT_LENGTH + NONCE_LENGTH + 16

@@ -69,7 +69,7 @@ class MiningService:
         )
         return status
 
-    async def status(self) -> MinerStatus:
+    def status(self) -> MinerStatus:
         """Estado atual do minerador."""
         return self._process.status()
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import time
 from collections.abc import AsyncIterator
+from typing import Annotated
 
 from fastapi import APIRouter, Query, Request, Response, status
 from fastapi.responses import StreamingResponse
@@ -27,10 +28,10 @@ _SSE_HEADERS = {
 }
 
 
-@router.get("/health", response_model=schemas.HealthResponse)
+@router.get("/health")
 async def health(container: ContainerDep) -> schemas.HealthResponse:
     """Estado geral do serviço (para healthcheck do container)."""
-    snapshot = await container.mining.status()
+    snapshot = container.mining.status()
     return schemas.HealthResponse(
         status="ok",
         version=__version__,
@@ -38,19 +39,19 @@ async def health(container: ContainerDep) -> schemas.HealthResponse:
     )
 
 
-@router.get("/wallet", response_model=schemas.WalletStatus)
+@router.get("/wallet")
 async def get_wallet(container: ContainerDep) -> schemas.WalletStatus:
     """Situação da carteira configurada."""
     return _wallet_status(await container.wallets.get_wallet())
 
 
-@router.post("/wallet/generate", response_model=schemas.GenerateResponse)
+@router.post("/wallet/generate")
 async def generate_wallet(
     payload: schemas.GenerateRequest,
     container: ContainerDep,
 ) -> schemas.GenerateResponse:
     """Gera uma nova seed (não persiste; exibida apenas uma vez)."""
-    generated = await container.wallets.generate(payload.words)
+    generated = container.wallets.generate(payload.words)
     return schemas.GenerateResponse(
         mnemonic=list(generated.mnemonic.words),
         address=str(generated.address),
@@ -59,7 +60,7 @@ async def generate_wallet(
     )
 
 
-@router.post("/wallet/confirm", response_model=schemas.WalletStatus)
+@router.post("/wallet/confirm")
 async def confirm_wallet(
     payload: schemas.ConfirmRequest,
     container: ContainerDep,
@@ -73,7 +74,7 @@ async def confirm_wallet(
     return _wallet_status(wallet)
 
 
-@router.post("/wallet/import/address", response_model=schemas.WalletStatus)
+@router.post("/wallet/import/address")
 async def import_address(
     payload: schemas.ImportAddressRequest,
     container: ContainerDep,
@@ -83,7 +84,7 @@ async def import_address(
     return _wallet_status(wallet)
 
 
-@router.post("/wallet/reveal", response_model=schemas.RevealResponse)
+@router.post("/wallet/reveal")
 async def reveal_seed(
     payload: schemas.RevealRequest,
     container: ContainerDep,
@@ -93,7 +94,7 @@ async def reveal_seed(
     return schemas.RevealResponse(mnemonic=list(mnemonic.words))
 
 
-@router.post("/wallet/verify", response_model=schemas.VerifyResponse)
+@router.post("/wallet/verify")
 async def verify_seed(
     payload: schemas.VerifyRequest,
     container: ContainerDep,
@@ -110,13 +111,13 @@ async def delete_wallet(container: ContainerDep) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.get("/settings", response_model=schemas.SettingsModel)
+@router.get("/settings")
 async def get_settings(container: ContainerDep) -> schemas.SettingsModel:
     """Preferências atuais."""
     return _settings_model(await container.preferences.get())
 
 
-@router.put("/settings", response_model=schemas.SettingsModel)
+@router.put("/settings")
 async def update_settings(
     payload: schemas.SettingsUpdate,
     container: ContainerDep,
@@ -131,7 +132,7 @@ async def update_settings(
     return _settings_model(updated)
 
 
-@router.post("/miner/start", response_model=schemas.MinerStatusModel)
+@router.post("/miner/start")
 async def start_miner(
     payload: schemas.StartRequest,
     container: ContainerDep,
@@ -140,22 +141,22 @@ async def start_miner(
     return _status_model(await container.mining.start(payload.threads))
 
 
-@router.post("/miner/stop", response_model=schemas.MinerStatusModel)
+@router.post("/miner/stop")
 async def stop_miner(container: ContainerDep) -> schemas.MinerStatusModel:
     """Para a mineração."""
     return _status_model(await container.mining.stop())
 
 
-@router.get("/miner/status", response_model=schemas.MinerStatusModel)
+@router.get("/miner/status")
 async def miner_status(container: ContainerDep) -> schemas.MinerStatusModel:
     """Estado atual do minerador."""
-    return _status_model(await container.mining.status())
+    return _status_model(container.mining.status())
 
 
-@router.get("/miner/history", response_model=list[schemas.HistoryModel])
+@router.get("/miner/history")
 async def miner_history(
     container: ContainerDep,
-    limit: int = Query(default=50, ge=1, le=200),
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> list[schemas.HistoryModel]:
     """Histórico de execução."""
     events = await container.mining.history(limit)
@@ -177,10 +178,10 @@ async def miner_logs(request: Request, container: ContainerDep) -> StreamingResp
     return StreamingResponse(event_source(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
 
-@router.get("/pool/stats", response_model=schemas.PoolStatsModel)
+@router.get("/pool/stats")
 async def pool_stats(
     container: ContainerDep,
-    refresh: bool = False,
+    refresh: Annotated[bool, Query()] = False,
 ) -> schemas.PoolStatsModel:
     """Estatísticas públicas da pool (com cache)."""
     return _pool_model(await container.pool.get(refresh=refresh))

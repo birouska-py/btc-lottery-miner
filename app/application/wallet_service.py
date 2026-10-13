@@ -52,7 +52,7 @@ class WalletService:
             raise WalletNotConfiguredError("configure ou importe uma carteira antes de continuar")
         return wallet
 
-    async def generate(self, words: int = 12) -> GeneratedWallet:
+    def generate(self, words: int = 12) -> GeneratedWallet:
         """Gera uma nova seed BIP-39 (sem persistir nada)."""
         mnemonic = self._deriver.generate(words)
         return self._describe(mnemonic)

@@ -103,7 +103,7 @@ async def test_status_history_buffer_and_subscribe_delegate() -> None:
     await wiring.mining.start()
     wiring.process.push(LogEntry(timestamp=1.0, stream="stdout", message="oi"))
 
-    assert (await wiring.mining.status()).state is MinerState.RUNNING
+    assert wiring.mining.status().state is MinerState.RUNNING
     assert len(await wiring.mining.history(limit=10)) == 1
     assert wiring.mining.buffer()[-1].message == "oi"
 
