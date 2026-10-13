@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>btc-lottery-miner</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛏️</text></svg>">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon" aria-hidden="true">⛏️</span>
+      <div>
+        <h1>btc-lottery-miner</h1>
+        <p class="muted">Mineração de loteria solo de Bitcoin via CPU</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span id="wallet-badge" class="badge">sem carteira</span>
+      <span class="badge badge-muted">v{{ version }}</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Setup inicial / carteira -->
+    <section id="wallet-setup" class="card" hidden>
+      <h2>1. Configurar carteira</h2>
+      <p class="muted">
+        A seed é gerada 100% offline e exibida <strong>uma única vez</strong>.
+        Anote as 12 palavras em local seguro — sem ela é impossível recuperar o prêmio.
+      </p>
+
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="generate" role="tab">Gerar nova</button>
+        <button class="tab" data-tab="import" role="tab">Importar endereço</button>
+      </div>
+
+      <div id="tab-generate" class="tab-panel">
+        <button id="btn-generate" class="btn primary">Gerar carteira (BIP-39 / BIP-84)</button>
+        <div id="seed-area" hidden>
+          <p class="muted">Endereço derivado (Native SegWit):</p>
+          <code id="derived-address" class="address"></code>
+          <ol id="seed-words" class="words"></ol>
+          <label class="check">
+            <input type="checkbox" id="confirm-saved">
+            <span>Anotei as 12 palavras em local seguro</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="store-seed">
+            <span>Guardar a seed <strong>criptografada</strong> no servidor (opcional)</span>
+          </label>
+          <input id="seed-passphrase" class="input" type="password" placeholder="Senha para cifrar a seed (se marcado acima)" hidden>
+          <div class="actions">
+            <button id="btn-confirm" class="btn primary" disabled>Confirmar carteira</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-import" class="tab-panel" hidden>
+        <p class="muted">Já tem um endereço? Importe-o para receber o prêmio nele.</p>
+        <form id="import-form" class="row">
+          <input id="import-address" class="input" type="text" placeholder="bc1q..." autocomplete="off" required>
+          <button class="btn primary" type="submit">Importar endereço</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Painel de controle -->
+    <section id="dashboard" hidden>
+      <div class="grid">
+        <div class="card">
+          <h2>2. Painel de controle</h2>
+          <p class="muted">Carteira: <code id="current-address" class="address"></code></p>
+          <div class="actions">
+            <button id="btn-start" class="btn primary">Iniciar mineração</button>
+            <button id="btn-stop" class="btn danger" disabled>Parar</button>
+          </div>
+          <label class="field">
+            <span>Threads de CPU: <strong id="threads-value">1</strong></span>
+            <input id="threads" type="range" min="1" max="64" value="1">
+          </label>
+          <div class="stats">
+            <div class="stat"><span class="stat-label">Estado</span><span id="stat-state" class="stat-value">—</span></div>
+            <div class="stat"><span class="stat-label">Hashrate</span><span id="stat-hashrate" class="stat-value">—</span></div>
+            <div class="stat"><span class="stat-label">Uptime</span><span id="stat-uptime" class="stat-value">—</span></div>
+            <div class="stat"><span class="stat-label">Shares</span><span id="stat-shares" class="stat-value">0/0</span></div>
+          </div>
+          <p id="miner-error" class="error" hidden></p>
+        </div>
+
+        <div class="card">
+          <h2>3. Pool (CKPool solo)</h2>
+          <div class="stats">
+            <div class="stat"><span class="stat-label">Workers</span><span id="pool-workers" class="stat-value">—</span></div>
+            <div class="stat"><span class="stat-label">Shares</span><span id="pool-shares" class="stat-value">—</span></div>
+            <div class="stat"><span class="stat-label">Hashrate 1m</span><span id="pool-hashrate" class="stat-value">—</span></div>
+            <div class="stat"><span class="stat-label">Melhor share</span><span id="pool-best" class="stat-value">—</span></div>
+          </div>
+          <p class="muted" id="pool-note">Aguardando dados da pool…</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Configurações</h2>
+        <form id="settings-form" class="row wrap">
+          <label class="field"><span>Worker</span><input id="worker" class="input" type="text" maxlength="32"></label>
+          <label class="field"><span>Pool URL</span><input id="pool-url" class="input" type="text"></label>
+          <button class="btn" type="submit">Salvar</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Console de logs</h2>
+          <button id="btn-clear-logs" class="btn ghost">Limpar</button>
+        </div>
+        <pre id="logs" class="logs" aria-live="polite"></pre>
+      </div>
+
+      <div class="card">
+        <h2>Histórico</h2>
+        <table class="table">
+          <thead><tr><th>Quando</th><th>Evento</th><th>Detalhes</th></tr></thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
