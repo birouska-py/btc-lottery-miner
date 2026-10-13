@@ -61,6 +61,94 @@ docker compose up -d --build   # reconstrói/atualiza
 
 ---
 
+## 🐳 Deploy no Portainer
+
+O repositório traz uma **stack pronta** em [`deploy/portainer.yml`](deploy/portainer.yml): usa a
+imagem publicada e um **volume nomeado**, para o banco sobreviver a atualizações.
+
+### Opção A — usar a imagem pronta (recomendada, mais rápida)
+
+1. Portainer → **Stacks** → **+ Add stack**.
+2. **Build method:** **Web editor**.
+3. Cole o conteúdo de [`deploy/portainer.yml`](deploy/portainer.yml) (ou o YAML abaixo).
+4. **Deploy the stack**.
+
+```yaml
+services:
+  miner:
+    image: birouskapy/btc-lottery-miner:latest
+    container_name: btc-lottery-miner
+    restart: unless-stopped
+    ports:
+      - "8080:8080"          # troque para "8090:8080" se a 8080 já estiver em uso
+    environment:
+      LOTTERY_DEFAULT_THREADS: "2"
+      LOTTERY_DEFAULT_POOL_URL: "stratum+tcp://solo.ckpool.org:3333"
+    volumes:
+      - miner-data:/app/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 512M
+volumes:
+  miner-data:
+```
+
+### Opção B — compilar do Git no próprio host (método "Repository")
+
+Como o projeto já tem `Dockerfile` + `docker-compose.yml`, o Portainer builda direto do GitHub:
+
+1. **Stacks** → **+ Add stack** → nome (ex.: `solo-miner`).
+2. **Build method:** **Repository**.
+3. **Repository URL:** `https://github.com/birouska-py/btc-lottery-miner`
+4. **Compose path:** `docker-compose.yml`
+5. **Branch:** `main`
+6. **Deploy the stack** (a primeira build compila o cpuminer no host — leva alguns minutos).
+
+> ⚠️ No método Repository, o volume relativo `./data` cai na pasta interna da stack. Prefira
+> trocar por um **volume nomeado** (`miner-data:/app/data`) para não perder o banco.
+
+### Depois do deploy (as duas opções)
+
+1. Abra `http://<IP-do-host>:8080`.
+2. **Gerar carteira** (anote as 12 palavras!) ou **Importar endereço** (`bc1q...`).
+3. Ajuste as **threads** e clique em **Iniciar**.
+4. Logs: Portainer → **Containers → btc-lottery-miner → Logs**. Pool:
+   `https://solo.ckpool.org/users/<SEU_ENDERECO>`.
+
+> 💡 `LOTTERY_DEFAULT_THREADS` define só o valor **inicial**; o que persiste é o ajuste salvo na UI.
+
+<details>
+<summary>🇬🇧 <b>English — Portainer deploy</b></summary>
+
+The repo ships a ready-to-use stack in [`deploy/portainer.yml`](deploy/portainer.yml) (published
+image + **named volume** so the database survives upgrades).
+
+**Option A — use the published image (recommended, fastest)**
+1. Portainer → **Stacks** → **+ Add stack**.
+2. **Build method:** **Web editor**.
+3. Paste [`deploy/portainer.yml`](deploy/portainer.yml) (or the YAML above).
+4. **Deploy the stack**.
+
+**Option B — build from Git on the host ("Repository" method)**
+1. **Stacks** → **+ Add stack** → name (e.g. `solo-miner`).
+2. **Build method:** **Repository**.
+3. **Repository URL:** `https://github.com/birouska-py/btc-lottery-miner`
+4. **Compose path:** `docker-compose.yml`
+5. **Branch:** `main` → **Deploy the stack**. (The first build compiles the miner on the host.)
+
+> ⚠️ With the Repository method the relative `./data` volume lands in the stack's internal folder.
+> Prefer a **named volume** (`miner-data:/app/data`) so you don't lose the database.
+
+**After deploy:** open `http://<host-ip>:8080` → **Generate wallet** (write down the 12 words) or
+**Import address** (`bc1q...`) → set **threads** → **Start**. Logs: Portainer →
+**Containers → btc-lottery-miner → Logs**. Pool: `https://solo.ckpool.org/users/<YOUR_ADDRESS>`.
+
+</details>
+
+---
+
 ## 🚀 Uso
 
 1. **Configurar carteira**

@@ -1,0 +1,30 @@
+# Stack pronta para o Portainer (imagem publicada do Docker Hub).
+# Ready-to-use Portainer stack (published Docker Hub image).
+#
+# Como usar / How to use:
+#   Portainer → Stacks → + Add stack → Build method: "Web editor" → cole este YAML → Deploy.
+#
+# O volume é NOMEADO (miner-data) para o banco criptografado sobreviver a atualizações.
+# The volume is NAMED (miner-data) so the encrypted database survives upgrades.
+services:
+  miner:
+    image: birouskapy/btc-lottery-miner:latest
+    container_name: btc-lottery-miner
+    restart: unless-stopped
+    ports:
+      # Troque para "8090:8080" se a porta 8080 já estiver em uso.
+      - "8080:8080"
+    environment:
+      # Valor INICIAL de threads; o que persiste é o ajuste salvo na UI.
+      LOTTERY_DEFAULT_THREADS: "2"
+      LOTTERY_DEFAULT_POOL_URL: "stratum+tcp://solo.ckpool.org:3333"
+    volumes:
+      - miner-data:/app/data
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: 512M
+
+volumes:
+  miner-data:
