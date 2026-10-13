@@ -56,6 +56,14 @@ async def test_invalid_worker_and_pool_are_rejected() -> None:
         await service.update(pool_url="ftp://pool")
 
 
+async def test_update_force_ipv4() -> None:
+    repository = MemorySettingsRepository()
+    service = make_service(repository)
+    updated = await service.update(force_ipv4=True)
+    assert updated.force_ipv4 is True
+    assert (await service.get()).force_ipv4 is True
+
+
 async def test_get_normalizes_stored_values() -> None:
     repository = MemorySettingsRepository()
     repository.settings = AppSettings(

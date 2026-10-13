@@ -64,6 +64,21 @@ async def test_start_reads_output_and_stop(tmp_path: Path) -> None:
     assert stopped.pid is None
 
 
+async def test_hashrate_sums_threads(tmp_path: Path) -> None:
+    script = make_script(
+        tmp_path,
+        "threads.sh",
+        'echo "thread 0: 100 hashes, 1000 khash/s"\n'
+        'echo "thread 1: 100 hashes, 2000 khash/s"\n'
+        "sleep 30\n",
+    )
+    process = CpuminerProcess(binary=script)
+    await process.start(CONFIG)
+    await wait_until(lambda: process.status().hashrate == pytest.approx(3_000_000.0))
+    assert process.status().hashrate == pytest.approx(3_000_000.0)
+    await process.stop()
+
+
 async def test_start_with_missing_binary(tmp_path: Path) -> None:
     process = CpuminerProcess(binary=str(tmp_path / "does-not-exist"))
     with pytest.raises(MinerError):

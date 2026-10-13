@@ -144,6 +144,43 @@ async def test_settings_get_and_update(client: httpx.AsyncClient) -> None:
     assert invalid.status_code == 422
 
 
+async def test_settings_force_ipv4(client: httpx.AsyncClient) -> None:
+    defaults = await client.get("/api/settings")
+    assert defaults.json()["force_ipv4"] is False
+
+    updated = await client.put("/api/settings", json={"force_ipv4": True})
+    assert updated.json()["force_ipv4"] is True
+    assert (await client.get("/api/settings")).json()["force_ipv4"] is True
+
+
+async def test_pool_presets(client: httpx.AsyncClient) -> None:
+    response = await client.get("/api/pools/presets")
+    assert response.status_code == 200
+    presets = response.json()
+    assert any(p["url"] == "stratum+tcp://solo.ckpool.org:3333" for p in presets)
+    assert all({"name", "url"} <= set(preset) for preset in presets)
+
+
+async def test_pool_test_reachable(client: httpx.AsyncClient) -> None:
+    response = await client.post(
+        "/api/pool/test",
+        json={"pool_url": "stratum+tcp://solo.ckpool.org:3333"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["reachable"] is True
+    assert body["address"] == "203.0.113.10"
+    assert body["latency_ms"] == 12.5
+    assert body["host"] == "solo.ckpool.org"
+    assert body["port"] == 3333
+
+
+async def test_pool_test_invalid_url(client: httpx.AsyncClient) -> None:
+    response = await client.post("/api/pool/test", json={"pool_url": "http://nope"})
+    assert response.status_code == 422
+    assert response.json()["error"] == "ValidationError"
+
+
 async def test_miner_start_requires_wallet(client: httpx.AsyncClient) -> None:
     response = await client.post("/api/miner/start", json={})
     assert response.status_code == 404

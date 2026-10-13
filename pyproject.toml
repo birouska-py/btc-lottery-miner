@@ -1,6 +1,6 @@
 [project]
 name = "btc-lottery-miner"
-version = "0.1.0"
+version = "0.2.0"
 description = "Minerador de loteria solo de Bitcoin via CPU, com dashboard web (FastAPI) e banco SQLite criptografado."
 readme = "README.md"
 requires-python = ">=3.12"

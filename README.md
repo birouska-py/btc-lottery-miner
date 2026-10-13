@@ -16,6 +16,8 @@ Minerador de **loteria solo de Bitcoin via CPU** — backend e dashboard em um *
 - **Controle do minerador**: start/stop assíncrono do `cpuminer` (algoritmo `sha256d`), ajuste de **threads** e **streaming de logs em tempo real** (SSE).
 - **Monitoramento da pool**: consulta periódica a `https://solo.ckpool.org/users/<endereço>` (shares, workers, hashrate, melhor share) com cache.
 - **Dashboard web** responsivo em modo escuro (HTML/CSS/JS puro, sem build de frontend).
+- **Diagnóstico de pool**: botão **Testar pool** (faz o TCP connect e mostra **OK/FALHA + IP + latência**), seletor de **presets** de pool e opção **forçar IPv4** (evita `Network is unreachable` quando a rede tem IPv6 anunciado sem rota).
+- **Hashrate somado**: o painel soma o hashrate de todos os threads do cpuminer.
 - **Arquitetura DDD**: domínio puro, portas/adaptadores, injeção de dependências e testes com *fakes* em memória.
 
 ---
@@ -237,6 +239,8 @@ app/
 | GET | `/api/miner/history` | Histórico de execução. |
 | GET | `/api/miner/logs` | **SSE** com logs ao vivo. |
 | GET | `/api/pool/stats` | Estatísticas da pool (cache; `?refresh=true` força). |
+| GET | `/api/pools/presets` | Pools pré-configuradas para o seletor da UI. |
+| POST | `/api/pool/test` | Testa conectividade TCP (`{"pool_url": "stratum+tcp://..."}`) → IP, latência, OK/FALHA. |
 
 Documentação interativa: `http://localhost:8080/docs`.
 

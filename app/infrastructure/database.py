@@ -50,7 +50,10 @@ CREATE TABLE IF NOT EXISTS pool_stats (
 CREATE INDEX IF NOT EXISTS history_created_at_idx ON history (created_at DESC);
 """
 
-_MIGRATIONS: tuple[tuple[int, str], ...] = ((1, _SCHEMA_V1),)
+_MIGRATIONS: tuple[tuple[int, str], ...] = (
+    (1, _SCHEMA_V1),
+    (2, "ALTER TABLE settings ADD COLUMN force_ipv4 INTEGER NOT NULL DEFAULT 0;"),
+)
 
 
 class Database:

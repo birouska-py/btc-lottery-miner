@@ -104,10 +104,24 @@
 
       <div class="card">
         <h2>Configurações</h2>
-        <form id="settings-form" class="row wrap">
-          <label class="field"><span>Worker</span><input id="worker" class="input" type="text" maxlength="32"></label>
+        <form id="settings-form" class="stack">
+          <div class="row wrap">
+            <label class="field"><span>Worker</span><input id="worker" class="input" type="text" maxlength="32"></label>
+            <label class="field">
+              <span>Presets de pool</span>
+              <select id="pool-presets" class="input"><option value="">— escolher —</option></select>
+            </label>
+          </div>
           <label class="field"><span>Pool URL</span><input id="pool-url" class="input" type="text"></label>
-          <button class="btn" type="submit">Salvar</button>
+          <label class="check">
+            <input type="checkbox" id="force-ipv4">
+            <span>Forçar IPv4 (evita “Network is unreachable” quando há IPv6 sem rota)</span>
+          </label>
+          <div class="actions center">
+            <button class="btn" type="submit">Salvar</button>
+            <button class="btn" type="button" id="btn-test-pool">Testar pool</button>
+            <span id="pool-test-result" class="muted"></span>
+          </div>
         </form>
       </div>
 

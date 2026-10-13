@@ -18,6 +18,7 @@ from app.domain.errors import MinerAlreadyRunningError, MinerError, MinerNotRunn
 from app.domain.mining import HashRate, LogEntry, MinerState, MinerStatus, MiningConfig, ShareStats
 
 _ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+_THREAD_RE = re.compile(r"thread\s+(\d+)\s*:")
 _ACCEPTED_RE = re.compile(r"accepted:\s*(\d+)\s*/\s*(\d+)")
 _REJECTED_RE = re.compile(r"rejected:\s*(\d+)")
 _STALE_RE = re.compile(r"stale:\s*(\d+)")
@@ -45,6 +46,7 @@ class CpuminerProcess:
         self._pid: int | None = None
         self._threads = 0
         self._hashrate = 0.0
+        self._thread_rates: dict[int, float] = {}
         self._shares = ShareStats()
         self._started_at: float | None = None
         self._last_error: str | None = None
@@ -59,6 +61,7 @@ class CpuminerProcess:
         self._last_error = None
         self._shares = ShareStats()
         self._hashrate = 0.0
+        self._thread_rates = {}
         self._threads = config.threads
         command = config.as_command(self._binary)
 
@@ -159,7 +162,12 @@ class CpuminerProcess:
     def _observe(self, line: str) -> None:
         rate = HashRate.parse(line)
         if rate is not None:
-            self._hashrate = rate.hashes_per_second
+            thread = _THREAD_RE.search(line)
+            if thread is not None:
+                self._thread_rates[int(thread.group(1))] = rate.hashes_per_second
+                self._hashrate = sum(self._thread_rates.values())
+            else:
+                self._hashrate = rate.hashes_per_second
         accepted = _ACCEPTED_RE.search(line)
         if accepted is not None:
             shares_accepted = int(accepted.group(1))

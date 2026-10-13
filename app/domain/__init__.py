@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from app.domain.connectivity import ConnectionProbe, PoolEndpoint
 from app.domain.errors import (
     CryptoError,
     DecryptionError,
@@ -31,6 +32,7 @@ from app.domain.stats import PoolStats
 from app.domain.wallet import Fingerprint, Mnemonic, Wallet, WalletAddress
 
 __all__ = [
+    "ConnectionProbe",
     "CryptoError",
     "DecryptionError",
     "DomainError",
@@ -48,6 +50,7 @@ __all__ = [
     "MinerStatus",
     "MiningConfig",
     "Mnemonic",
+    "PoolEndpoint",
     "PoolError",
     "PoolNotFoundError",
     "PoolStats",
