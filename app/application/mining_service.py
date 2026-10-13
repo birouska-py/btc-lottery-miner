@@ -8,10 +8,12 @@ from collections.abc import AsyncIterator, Sequence
 from app.application.ports import (
     Clock,
     HistoryRepository,
+    HostResolver,
     MinerProcess,
 )
 from app.application.settings_service import SettingsService
 from app.application.wallet_service import WalletService
+from app.domain.connectivity import PoolEndpoint
 from app.domain.history import HistoryEvent
 from app.domain.mining import LogEntry, MinerStatus, MiningConfig
 
@@ -25,12 +27,14 @@ class MiningService:
         wallets: WalletService,
         settings: SettingsService,
         history: HistoryRepository,
+        resolver: HostResolver,
         clock: Clock = time.time,
     ) -> None:
         self._process = process
         self._wallets = wallets
         self._settings = settings
         self._history = history
+        self._resolver = resolver
         self._clock = clock
 
     async def start(self, threads: int | None = None) -> MinerStatus:
@@ -40,11 +44,17 @@ class MiningService:
         if threads is not None:
             preferences = await self._settings.update(threads=threads)
 
+        pool_url = preferences.pool_url
+        if preferences.force_ipv4:
+            endpoint = PoolEndpoint.parse(pool_url)
+            resolved = await self._resolver.resolve_ipv4(endpoint.host)
+            pool_url = str(endpoint.with_host(resolved))
+
         config = MiningConfig(
             address=str(wallet.address),
             worker=preferences.worker,
             threads=preferences.threads,
-            pool_url=preferences.pool_url,
+            pool_url=pool_url,
             algorithm=preferences.algorithm,
         )
         status = await self._process.start(config)
@@ -55,7 +65,8 @@ class MiningService:
                 detail={
                     "threads": config.threads,
                     "worker": config.worker,
-                    "pool_url": config.pool_url,
+                    "pool_url": preferences.pool_url,
+                    "force_ipv4": preferences.force_ipv4,
                 },
             )
         )

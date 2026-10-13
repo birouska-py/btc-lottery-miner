@@ -26,7 +26,7 @@ from app.infrastructure.repositories import (
 )
 from app.infrastructure.wallet_deriver import Bip84Deriver
 from app.main import create_app
-from tests.fakes import FakeMinerProcess, FakePoolClient
+from tests.fakes import FakeMinerProcess, FakePoolClient, FakeProber, FakeResolver
 
 #: Vetor oficial BIP-84 (sem passphrase).
 BIP84_MNEMONIC = (
@@ -76,11 +76,25 @@ def fake_pool_client() -> FakePoolClient:
 
 
 @pytest.fixture
+def fake_prober() -> FakeProber:
+    """Testador de conectividade simulado."""
+    return FakeProber()
+
+
+@pytest.fixture
+def fake_resolver() -> FakeResolver:
+    """Resolvedor IPv4 simulado."""
+    return FakeResolver()
+
+
+@pytest.fixture
 def container(
     settings: Settings,
     database: Database,
     fake_process: FakeMinerProcess,
     fake_pool_client: FakePoolClient,
+    fake_prober: FakeProber,
+    fake_resolver: FakeResolver,
 ) -> Container:
     """Container com infraestrutura real (SQLite) e adaptadores externos simulados."""
     wallets = WalletService(
@@ -104,11 +118,13 @@ def container(
         wallets=wallets,
         settings=preferences,
         history=SqliteHistoryRepository(database),
+        resolver=fake_resolver,
     )
     pool = PoolService(
         client=fake_pool_client,
         cache=SqliteStatsCacheRepository(database),
         wallets=wallets,
+        prober=fake_prober,
         ttl_seconds=settings.pool_stats_ttl_seconds,
     )
     return Container(
@@ -120,6 +136,8 @@ def container(
         pool=pool,
         process=fake_process,
         pool_client=fake_pool_client,
+        prober=fake_prober,
+        resolver=fake_resolver,
     )
 
 

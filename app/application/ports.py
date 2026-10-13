@@ -10,12 +10,27 @@ from collections.abc import AsyncIterator, Callable, Sequence
 from typing import Protocol, runtime_checkable
 
 from app.application.models import AppSettings
+from app.domain.connectivity import ConnectionProbe, PoolEndpoint
 from app.domain.history import HistoryEvent
 from app.domain.mining import LogEntry, MinerStatus, MiningConfig
 from app.domain.stats import PoolStats
 from app.domain.wallet import DerivationPath, Fingerprint, Mnemonic, Wallet, WalletAddress
 
 Clock = Callable[[], float]
+
+
+@runtime_checkable
+class EndpointProber(Protocol):
+    """Testa a conectividade TCP contra um endpoint de pool."""
+
+    async def probe(self, endpoint: PoolEndpoint) -> ConnectionProbe: ...
+
+
+@runtime_checkable
+class HostResolver(Protocol):
+    """Resolve um host para um endereço IPv4 (usado ao forçar IPv4)."""
+
+    async def resolve_ipv4(self, host: str) -> str: ...
 
 
 @runtime_checkable

@@ -61,9 +61,12 @@ async def test_settings_repository_roundtrip(database: Database) -> None:
         worker="w",
         pool_url="stratum+tcp://x:1",
         algorithm="sha256d",
+        force_ipv4=True,
     )
     await repository.save(settings)
-    assert await repository.get() == settings
+    stored = await repository.get()
+    assert stored == settings
+    assert stored is not None and stored.force_ipv4 is True
 
 
 async def test_history_repository_orders_and_parses(database: Database) -> None:

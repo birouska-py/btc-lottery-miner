@@ -12,6 +12,8 @@ from fastapi.responses import StreamingResponse
 
 from app import __version__
 from app.application.models import AppSettings
+from app.application.presets import POOL_PRESETS
+from app.domain.connectivity import ConnectionProbe
 from app.domain.history import HistoryEvent
 from app.domain.mining import HashRate, LogEntry, MinerStatus
 from app.domain.stats import PoolStats
@@ -128,6 +130,7 @@ async def update_settings(
         worker=payload.worker,
         pool_url=payload.pool_url,
         algorithm=payload.algorithm,
+        force_ipv4=payload.force_ipv4,
     )
     return _settings_model(updated)
 
@@ -178,6 +181,21 @@ async def miner_logs(request: Request, container: ContainerDep) -> StreamingResp
     return StreamingResponse(event_source(), media_type="text/event-stream", headers=_SSE_HEADERS)
 
 
+@router.get("/pools/presets")
+async def pool_presets() -> list[schemas.PoolPresetModel]:
+    """Lista de pools pré-configuradas para o seletor da interface."""
+    return [schemas.PoolPresetModel(name=preset.name, url=preset.url) for preset in POOL_PRESETS]
+
+
+@router.post("/pool/test")
+async def test_pool(
+    payload: schemas.PoolProbeRequest,
+    container: ContainerDep,
+) -> schemas.PoolProbeModel:
+    """Testa a conectividade TCP com a pool informada (mostra IP e latência)."""
+    return _probe_model(await container.pool.probe(payload.pool_url))
+
+
 @router.get("/pool/stats")
 async def pool_stats(
     container: ContainerDep,
@@ -205,6 +223,20 @@ def _settings_model(settings: AppSettings) -> schemas.SettingsModel:
         worker=settings.worker,
         pool_url=settings.pool_url,
         algorithm=settings.algorithm,
+        force_ipv4=settings.force_ipv4,
+    )
+
+
+def _probe_model(probe: ConnectionProbe) -> schemas.PoolProbeModel:
+    return schemas.PoolProbeModel(
+        url=str(probe.endpoint),
+        host=probe.endpoint.host,
+        port=probe.endpoint.port,
+        scheme=probe.endpoint.scheme,
+        reachable=probe.reachable,
+        address=probe.address,
+        latency_ms=probe.latency_ms,
+        error=probe.error,
     )
 
 

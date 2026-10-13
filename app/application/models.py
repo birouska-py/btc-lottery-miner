@@ -15,6 +15,15 @@ class AppSettings:
     worker: str
     pool_url: str
     algorithm: str = "sha256d"
+    force_ipv4: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class PoolPreset:
+    """Pool pré-configurada oferecida na interface."""
+
+    name: str
+    url: str
 
 
 @dataclass(frozen=True, slots=True)

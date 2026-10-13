@@ -111,7 +111,7 @@ class SqliteSettingsRepository:
     async def get(self) -> AppSettings | None:
         """Preferências salvas, se houver."""
         async with self._database.connection.execute(
-            "SELECT threads, worker, pool_url, algorithm FROM settings WHERE id = 1"
+            "SELECT threads, worker, pool_url, algorithm, force_ipv4 FROM settings WHERE id = 1"
         ) as cursor:
             row = await cursor.fetchone()
         if row is None:
@@ -121,19 +121,22 @@ class SqliteSettingsRepository:
             worker=str(row["worker"]),
             pool_url=str(row["pool_url"]),
             algorithm=str(row["algorithm"]),
+            force_ipv4=bool(row["force_ipv4"]),
         )
 
     async def save(self, settings: AppSettings) -> None:
         """Cria/atualiza as preferências."""
         await self._database.connection.execute(
             """
-            INSERT INTO settings (id, threads, worker, pool_url, algorithm, updated_at)
-            VALUES (1, ?, ?, ?, ?, ?)
+            INSERT INTO settings
+                (id, threads, worker, pool_url, algorithm, force_ipv4, updated_at)
+            VALUES (1, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 threads = excluded.threads,
                 worker = excluded.worker,
                 pool_url = excluded.pool_url,
                 algorithm = excluded.algorithm,
+                force_ipv4 = excluded.force_ipv4,
                 updated_at = excluded.updated_at
             """,
             (
@@ -141,6 +144,7 @@ class SqliteSettingsRepository:
                 settings.worker,
                 settings.pool_url,
                 settings.algorithm,
+                1 if settings.force_ipv4 else 0,
                 time.time(),
             ),
         )

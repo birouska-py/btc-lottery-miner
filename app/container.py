@@ -14,6 +14,7 @@ from app.infrastructure.crypto import Argon2KeyDeriver, PassphraseCipher
 from app.infrastructure.database import Database
 from app.infrastructure.miner_process import CpuminerProcess
 from app.infrastructure.pool_client import CkPoolClient
+from app.infrastructure.probe import SocketHostResolver, SocketProber
 from app.infrastructure.repositories import (
     SqliteHistoryRepository,
     SqliteSecretRepository,
@@ -38,6 +39,8 @@ class Container:
     pool: PoolService
     process: CpuminerProcess
     pool_client: CkPoolClient
+    prober: SocketProber
+    resolver: SocketHostResolver
 
 
 def build_container(settings: Settings) -> Container:
@@ -66,20 +69,24 @@ def build_container(settings: Settings) -> Container:
         binary=settings.cpuminer_bin,
         buffer_size=settings.log_buffer_size,
     )
+    resolver = SocketHostResolver()
     mining = MiningService(
         process=process,
         wallets=wallets,
         settings=preferences,
         history=SqliteHistoryRepository(database),
+        resolver=resolver,
     )
     pool_client = CkPoolClient(
         base_url=settings.ckpool_base_url,
         timeout=settings.request_timeout_seconds,
     )
+    prober = SocketProber(timeout=settings.request_timeout_seconds)
     pool = PoolService(
         client=pool_client,
         cache=SqliteStatsCacheRepository(database),
         wallets=wallets,
+        prober=prober,
         ttl_seconds=settings.pool_stats_ttl_seconds,
     )
     return Container(
@@ -91,4 +98,6 @@ def build_container(settings: Settings) -> Container:
         pool=pool,
         process=process,
         pool_client=pool_client,
+        prober=prober,
+        resolver=resolver,
     )

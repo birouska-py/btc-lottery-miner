@@ -6,6 +6,7 @@ from app.infrastructure.crypto import Argon2KeyDeriver, KeyDeriver, PassphraseCi
 from app.infrastructure.database import Database
 from app.infrastructure.miner_process import CpuminerProcess
 from app.infrastructure.pool_client import CkPoolClient
+from app.infrastructure.probe import SocketHostResolver, SocketProber
 from app.infrastructure.repositories import (
     SqliteHistoryRepository,
     SqliteSecretRepository,
@@ -23,6 +24,8 @@ __all__ = [
     "Database",
     "KeyDeriver",
     "PassphraseCipher",
+    "SocketHostResolver",
+    "SocketProber",
     "SqliteHistoryRepository",
     "SqliteSecretRepository",
     "SqliteSettingsRepository",

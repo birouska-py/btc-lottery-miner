@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator, Sequence
 
 from app.application.models import AppSettings
+from app.domain.connectivity import ConnectionProbe, PoolEndpoint
 from app.domain.errors import MinerAlreadyRunningError, MinerError, MinerNotRunningError
 from app.domain.history import HistoryEvent
 from app.domain.mining import LogEntry, MinerState, MinerStatus, MiningConfig
@@ -167,3 +168,44 @@ class FakePoolClient:
 
     async def aclose(self) -> None:
         self.closed = True
+
+
+class FakeProber:
+    """Testador de conectividade simulado."""
+
+    def __init__(
+        self,
+        result: ConnectionProbe | None = None,
+        error: Exception | None = None,
+    ) -> None:
+        self.result = result
+        self.error = error
+        self.calls: list[PoolEndpoint] = []
+
+    async def probe(self, endpoint: PoolEndpoint) -> ConnectionProbe:
+        self.calls.append(endpoint)
+        if self.error is not None:
+            raise self.error
+        if self.result is not None:
+            return self.result
+        return ConnectionProbe(
+            endpoint=endpoint,
+            reachable=True,
+            address="203.0.113.10",
+            latency_ms=12.5,
+        )
+
+
+class FakeResolver:
+    """Resolvedor IPv4 simulado."""
+
+    def __init__(self, ip: str = "203.0.113.10", error: Exception | None = None) -> None:
+        self.ip = ip
+        self.error = error
+        self.calls: list[str] = []
+
+    async def resolve_ipv4(self, host: str) -> str:
+        self.calls.append(host)
+        if self.error is not None:
+            raise self.error
+        return self.ip

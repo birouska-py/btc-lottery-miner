@@ -92,6 +92,7 @@ class SettingsModel(_Base):
     worker: str
     pool_url: str
     algorithm: str
+    force_ipv4: bool
 
 
 class SettingsUpdate(_Base):
@@ -101,6 +102,33 @@ class SettingsUpdate(_Base):
     worker: str | None = None
     pool_url: str | None = None
     algorithm: str | None = None
+    force_ipv4: bool | None = None
+
+
+class PoolPresetModel(_Base):
+    """Pool pré-configurada exibida no seletor."""
+
+    name: str
+    url: str
+
+
+class PoolProbeRequest(_Base):
+    """URL da pool a ser testada."""
+
+    pool_url: str = Field(min_length=1)
+
+
+class PoolProbeModel(_Base):
+    """Resultado do teste de conectividade com a pool."""
+
+    url: str
+    host: str
+    port: int
+    scheme: str
+    reachable: bool
+    address: str | None
+    latency_ms: float | None
+    error: str | None
 
 
 class ShareStatsModel(_Base):

@@ -22,7 +22,7 @@ async def test_connect_creates_file_and_migrates(tmp_path: Path) -> None:
     assert (tmp_path / "app.db").exists()
     async with database.connection.execute("PRAGMA user_version") as cursor:
         row = await cursor.fetchone()
-    assert row is not None and row[0] == 1
+    assert row is not None and row[0] == 2
     await database.close()
 
 

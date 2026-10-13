@@ -36,6 +36,7 @@ class SettingsService:
         worker: str | None = None,
         pool_url: str | None = None,
         algorithm: str | None = None,
+        force_ipv4: bool | None = None,
     ) -> AppSettings:
         """Atualiza parcialmente as preferências e devolve o estado final."""
         current = await self.get()
@@ -44,6 +45,7 @@ class SettingsService:
             worker=current.worker if worker is None else worker,
             pool_url=current.pool_url if pool_url is None else pool_url,
             algorithm=current.algorithm if algorithm is None else algorithm,
+            force_ipv4=current.force_ipv4 if force_ipv4 is None else force_ipv4,
         )
         normalized = self._normalize(updated)
         await self._repository.save(normalized)
@@ -59,4 +61,5 @@ class SettingsService:
             worker=worker,
             pool_url=settings.pool_url,
             algorithm=settings.algorithm or self._defaults.algorithm,
+            force_ipv4=settings.force_ipv4,
         )

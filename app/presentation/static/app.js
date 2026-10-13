@@ -166,6 +166,7 @@ async function loadSettings() {
   $("threads-value").textContent = settings.threads;
   $("worker").value = settings.worker;
   $("pool-url").value = settings.pool_url;
+  $("force-ipv4").checked = Boolean(settings.force_ipv4);
 }
 
 function renderStatus(status) {
@@ -280,11 +281,52 @@ function setupMinerControls() {
         body: JSON.stringify({
           worker: $("worker").value.trim(),
           pool_url: $("pool-url").value.trim(),
+          force_ipv4: $("force-ipv4").checked,
         }),
       });
       toast("Configurações salvas.");
     } catch (error) {
       toast(error.message, true);
+    }
+  });
+}
+
+async function loadPoolPresets() {
+  try {
+    const presets = await api("/api/pools/presets");
+    const select = $("pool-presets");
+    presets.forEach((preset) => {
+      const option = document.createElement("option");
+      option.value = preset.url;
+      option.textContent = `${preset.name} — ${preset.url}`;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    /* silencioso: presets são um facilitador */
+  }
+}
+
+function setupPoolTools() {
+  $("pool-presets").addEventListener("change", (event) => {
+    if (event.target.value) $("pool-url").value = event.target.value;
+  });
+
+  $("btn-test-pool").addEventListener("click", async () => {
+    const result = $("pool-test-result");
+    result.textContent = "testando…";
+    try {
+      const probe = await api("/api/pool/test", {
+        method: "POST",
+        body: JSON.stringify({ pool_url: $("pool-url").value.trim() }),
+      });
+      if (probe.reachable) {
+        result.textContent = `✅ OK — ${probe.address}:${probe.port} (${probe.latency_ms} ms)`;
+      } else {
+        const address = probe.address ? ` (${probe.address})` : "";
+        result.textContent = `❌ falhou — ${probe.error || "sem detalhes"}${address}`;
+      }
+    } catch (error) {
+      result.textContent = `❌ ${error.message}`;
     }
   });
 }
@@ -350,7 +392,9 @@ async function init() {
   setupTabs();
   setupWalletForms();
   setupMinerControls();
+  setupPoolTools();
   setupLogsControls();
+  loadPoolPresets();
   try {
     await loadWallet();
   } catch (error) {
