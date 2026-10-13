@@ -45,6 +45,11 @@ docker compose up -d --build   # reconstrói/atualiza
 >   -v "$PWD/data:/app/data" birouskapy/btc-lottery-miner:latest
 > ```
 
+> **Plataformas:** a imagem publicada é **`linux/amd64`**. O suporte a **`linux/arm64`**
+> está em desenvolvimento na branch **`feat/arm64`** (o `cpuminer-multi` precisa de
+> ajustes para compilar em ARM). O build do cpuminer usa um **commit fixo** para ser
+> reproduzível (`ARG CPUMINER_REF`).
+
 > **Rodar mais de uma instância?** O SQLite não suporta escrita concorrente confiável no
 > mesmo arquivo. Para escalar, use **um volume por instância**:
 >
@@ -202,6 +207,9 @@ docker push birouskapy/btc-lottery-miner:latest
 ```
 
 ### Multi-arch (amd64 + arm64)
+
+> ⚠️ **arm64 em desenvolvimento** (branch `feat/arm64`). Hoje o multi-arch não fecha por
+> causa do cpuminer. Apenas `linux/amd64` está estável.
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 \
