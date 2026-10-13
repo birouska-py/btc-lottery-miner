@@ -38,6 +38,13 @@ docker compose down            # para (mantém ./data)
 docker compose up -d --build   # reconstrói/atualiza
 ```
 
+> **Sem clonar/buildar?** Use a imagem publicada:
+>
+> ```bash
+> docker run -d --name btc-lottery-miner -p 8080:8080 \
+>   -v "$PWD/data:/app/data" birouskapy/btc-lottery-miner:latest
+> ```
+
 > **Rodar mais de uma instância?** O SQLite não suporta escrita concorrente confiável no
 > mesmo arquivo. Para escalar, use **um volume por instância**:
 >
@@ -181,21 +188,24 @@ Todas usam o prefixo `LOTTERY_` (veja [`.env.example`](.env.example)):
 
 ## 🐋 Publicar imagem
 
+A imagem oficial está publicada em **`birouskapy/btc-lottery-miner`**
+(Docker Hub) com as tags `0.1.0` e `latest`.
+
 ### Docker Hub
 
 ```bash
-docker build -t <usuario>/btc-lottery-miner:0.1.0 .
-docker tag  <usuario>/btc-lottery-miner:0.1.0 <usuario>/btc-lottery-miner:latest
+docker build -t birouskapy/btc-lottery-miner:0.1.0 .
+docker tag  birouskapy/btc-lottery-miner:0.1.0 birouskapy/btc-lottery-miner:latest
 docker login
-docker push <usuario>/btc-lottery-miner:0.1.0
-docker push <usuario>/btc-lottery-miner:latest
+docker push birouskapy/btc-lottery-miner:0.1.0
+docker push birouskapy/btc-lottery-miner:latest
 ```
 
 ### Multi-arch (amd64 + arm64)
 
 ```bash
 docker buildx build --platform linux/amd64,linux/arm64 \
-  -t <usuario>/btc-lottery-miner:latest --push .
+  -t birouskapy/btc-lottery-miner:latest --push .
 ```
 
 > A imagem **não contém segredos**. Publicá-la não expõe a seed nem o endereço — isso vive
